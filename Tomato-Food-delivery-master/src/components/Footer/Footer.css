@@ -1,0 +1,91 @@
+.footer {
+    color: #d9d9d9;
+    background-color: #323232;
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Reduced gap */
+    flex-direction: column;
+    padding: 10px 5vw; /* Reduced padding */
+    padding-top: 40px; /* Reduced top padding */
+    margin-top: 50px; /* Reduced margin-top */
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+    max-height: 400px;
+}
+.footer .log2{
+    
+   width: 120px; /* Reduced the logo size */
+}
+/* Reduce overall footer content spacing */
+.footer-content {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 40px; /* Reduced gap */
+}
+
+/* Adjust individual content sections */
+.footer-content-left, 
+.footer-content-right, 
+.footer-content-center {
+    flex-direction: column;
+    align-items: start;
+    display: flex;
+    gap: 10px; /* Reduced spacing */
+}
+
+/* Adjust footer items */
+.footer-content-left li, 
+.footer-content-right li, 
+.footer-content-center li {
+    list-style: none;
+    margin-bottom: 5px; /* Reduced margin */
+    cursor: pointer;
+}
+
+/* Keep headings visible */
+.footer-content-right h2, 
+.footer-content-center h2 {
+    color: white;
+}
+
+/* Reduce social icon size */
+.footer-social-icon img {
+    width: 30px; /* Reduced size */
+    margin-right: 10px;
+}
+
+/* Reduce Footer Logo Size */
+.footer-logo img {
+    width: 60px; /* Smaller logo */
+    height: auto;
+}
+
+/* Reduce footer divider height */
+.footer hr {
+    width: 100%;
+    height: 1px; /* Thinner line */
+    margin: 20px 0px; /* Reduced spacing */
+    background-color: grey;
+    border: none;
+}
+
+/* Responsive Footer Adjustments */
+@media (max-width: 768px) {
+    .footer-content {
+        display: flex;
+        flex-direction: column;
+        gap: 20px; /* Adjusted for mobile */
+    }
+
+    .footer-copyright {
+        text-align: center;
+        font-size: 14px; /* Smaller text */
+    }
+
+    /* Reduce logo size further for mobile */
+    .footer-logo img {
+        width: 50px;
+    }
+}

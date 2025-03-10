@@ -1,0 +1,93 @@
+.header {
+    height: auto; /* Adjusts height dynamically based on content */
+    margin: 1.5vw auto 0; /* Small space between navbar and header */
+    background: url('/header_img.png') no-repeat center center;
+    background-size: contain; /* Ensures the entire image is displayed */
+    position: relative;
+    width: 100%; /* Ensures it spans the full width */
+    aspect-ratio: 16/6; /* Adjust aspect ratio to reduce vertical space */
+}
+
+/* Flex container for content */
+.header-contents {
+    position: absolute;
+    display: flex;
+    justify-content: space-between; /* Text on the left, image on the right */
+    align-items: center; /* Aligns items vertically */
+    flex-direction: row; /* Side-by-side layout */
+    width: 85%; /* Ensures content is not too stretched */
+    bottom: 5%; /* Slight gap from the top */
+    left: 6vw;
+    right: 6vw; /* Ensure the image stays aligned */
+    animation: fadeIn 3s;
+}
+
+/* Typing animation text (Left side) */
+.typing-text {
+    font-size: max(2vw, 18px);
+    color: black;
+    font-weight: bold;
+    flex: 1; /* Takes available space */
+}
+
+/* Image (Right side - Static) */
+.header-image {
+    width: 450px;
+    align-self: center;
+    flex-shrink: 0; /* Prevents image from resizing */
+}
+
+/* Headings inside header */
+.header-contents h2 {
+    font-weight: 500;
+    color: white;
+    font-size: max(4.5vw, 22px);
+}
+
+/* Paragraph inside header */
+.header-contents p {
+    color: white;
+    font-size: max(1vw, 14px);
+}
+
+/* Button Styling */
+.header-contents button {
+    border: none;
+    color: #747474;
+    font-weight: 500;
+    padding: 1vw 2.3vw;
+    background-color: white;
+    font-size: max(1.5vw, 13px);
+    border-radius: 50px;
+}
+
+/* Media Queries for Responsive Design */
+@media (max-width: 1050px) {
+    .header {
+        height: 35vw; /* Reduce height */
+    }
+    .header-contents {
+        width: 90%;
+    }
+    .header-image {
+        width: 350px;
+    }
+}
+
+@media (max-width: 750px) {
+    .header-contents {
+        flex-direction: column; /* Stack elements vertically */
+        align-items: center;
+        text-align: center;
+        top: 3%; /* Reduce space on smaller screens */
+    }
+    .header-contents p {
+        display: none;
+    }
+    .header-contents button {
+        padding: 2vw 4vw;
+    }
+    .header-image {
+        width: 250px; /* Reduce image size on small screens */
+    }
+}

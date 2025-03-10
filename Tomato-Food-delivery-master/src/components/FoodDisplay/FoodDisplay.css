@@ -1,0 +1,106 @@
+.food-display {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.food-display h2 {
+    font-size: max(2vw, 24px);
+    font-weight: 600;
+    color: #333;
+}
+
+.food-display-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 30px;
+    margin-top: 30px;
+    row-gap: 50px;
+}
+
+.food-item-container {
+    text-align: center;
+    padding: 20px;
+    border-radius: 10px;
+    background-color: #fff;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ✅ Optimize Image Size */
+.food-item-container img {
+    max-width: 100%;
+    height: 35%;
+    width: 35%;
+    border-radius: 8px;
+}
+
+/* ✅ Responsive Scaling */
+@media (max-width: 768px) {
+    .food-item-container img {
+        width: 90%;
+    }
+}
+
+.food-questions {
+    margin-top: 15px;
+    padding: 15px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #444;
+    background-color: #f8f8f8;
+    border-radius: 10px;
+}
+
+.food-questions p {
+    margin: 8px 0;
+}
+
+.answer-input {
+    margin-top: 15px;
+}
+
+.answer-input input {
+    padding: 10px;
+    width: 80%;
+    max-width: 300px;
+    border: 2px solid #ccc;
+    border-radius: 6px;
+    font-size: 16px;
+    text-align: center;
+}
+
+.answer-input input:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+.result {
+    display: block;
+    margin-top: 10px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.result.correct {
+    color: green;
+}
+
+.result.incorrect {
+    color: red;
+}
+
+.check-answers-btn {
+    margin-top: 20px;
+    padding: 12px 18px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.3s ease-in-out;
+}
+
+.check-answers-btn:hover {
+    background-color: #0056b3;
+}
