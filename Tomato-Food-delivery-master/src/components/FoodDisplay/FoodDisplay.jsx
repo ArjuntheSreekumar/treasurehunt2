@@ -1,84 +1,120 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { StoreContext } from "../../context/StoreContext";
 import FoodItem from "../FoodItem/FoodItem";
-import { db } from "../../firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { auth } from "../../firebase";
+import { db, auth } from "../../firebase";
+import { collection, getDoc, getDocs, query, where, doc, setDoc, serverTimestamp } from "firebase/firestore";
 import "./FoodDisplay.css";
 
 export const FoodDisplay = ({ category }) => {
-  const { food_list, addToCart } = useContext(StoreContext);
+  const { food_list } = useContext(StoreContext);
 
   const puzzleQuestions = {
-    Puzzle1: ["(3points)", "You are and always will be a _________"],
-    Puzzle2: ["(3points)", "https://www.hongkiat.com/blog/creative-404-error-pages/", "Ninjas are _______ ?"],
-    Puzzle3: ["(4points)", "LinkedIn based question"],
-    Puzzle4: ["(5points)", "Like all good lovers, they start with the head.", "_________"],
-    Puzzle5: ["(5points)", "A city must be untangled to be understood", "I will be there before and after you I am ________"]
+    Puzzle1: { points: 3, question: ["(3points)","You are and always will be a _________"] },
+    Puzzle2: { points: 3, question: ["(3points)","https://www.hongkiat.com/blog/creative-404-error-pages/", "Ninjas are _______ ?"] },
+    Puzzle3: { points: 4, question: ["(4points)","What fallath from thy curtains"] },
+    Puzzle4: { points: 5, question: ["(5points)","Like all good lovers, they start with the head.", "_________"] },
+    Puzzle5: { points: 5, question: ["(5points)","A city must be untangled to be understood", "I will be there before and after you I am ________"] },
   };
 
-  const correctAnswers = {
-    Puzzle1: { answer: "winner", points: 3 },
-    Puzzle2: { answer: "anonymous", points: 3 },
-    Puzzle3: { answer: "linkedin", points: 4 },
-    Puzzle4: { answer: "lemons", points: 5 },
-    Puzzle5: { answer: "tardigrade", points: 5 }
-  };
-
+  const [puzzleAnswers, setPuzzleAnswers] = useState({});
+  const [solvedPuzzles, setSolvedPuzzles] = useState({});
   const [userAnswers, setUserAnswers] = useState({});
-  const [results, setResults] = useState({});
-  const [cooldown, setCooldown] = useState({});
+  const [totalPoints, setTotalPoints] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPuzzles = async () => {
+      try {
+        const puzzleDoc = await getDoc(doc(db, "Puzzle_ans", "Puzzle_ans"));
+        if (puzzleDoc.exists()) {
+          setPuzzleAnswers(puzzleDoc.data());
+        } else {
+          console.error("No puzzle data found!");
+        }
+
+        const user = auth.currentUser;
+        if (user) {
+          const solvedQuery = query(collection(db, "user_puzzle_answers"), where("userEmail", "==", user.email));
+          const solvedSnapshot = await getDocs(solvedQuery);
+
+          let solvedMap = {};
+          let points = 0;
+
+          solvedSnapshot.forEach((doc) => {
+            const puzzleNum = doc.data().puzzleNumber;
+            solvedMap[puzzleNum] = true;
+            if (puzzleQuestions[puzzleNum]) {
+              points += puzzleQuestions[puzzleNum].points;
+            }
+          });
+
+          setSolvedPuzzles(solvedMap);
+          setTotalPoints(points);
+        }
+
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching puzzles:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchPuzzles();
+  }, []);
 
   const handleChange = (e, puzzle) => {
     setUserAnswers({
       ...userAnswers,
-      [puzzle]: e.target.value
+      [puzzle]: e.target.value,
     });
-  };
-
-  const saveToFirestore = async (puzzle, points) => {
-    const user = auth.currentUser;
-    const userEmail = user ? user.email : "anonymous@example.com";
-
-    try {
-      await addDoc(collection(db, "user_puzzle_answers"), {
-        puzzleNumber: puzzle,
-        points: points,
-        userEmail: userEmail,
-        timestamp: serverTimestamp(),
-      });
-      console.log("Data saved to Firestore!");
-    } catch (error) {
-      console.error("Error saving to Firestore:", error);
-    }
   };
 
   const checkAnswer = async (puzzle) => {
-    if (cooldown[puzzle]) return;
+    if (solvedPuzzles[puzzle]) return;
 
-    setCooldown((prev) => ({ ...prev, [puzzle]: true }));
-    setTimeout(() => {
-      setCooldown((prev) => ({ ...prev, [puzzle]: false }));
-    }, 5000);
+    try {
+      const correctAnswer = puzzleAnswers[puzzle]?.toLowerCase().trim();
+      const userAnswer = userAnswers[puzzle]?.toLowerCase().trim();
 
-    const isCorrect = userAnswers[puzzle]?.trim().toLowerCase() === correctAnswers[puzzle].answer;
+      if (!correctAnswer || !userAnswer) return;
 
-    if (isCorrect) {
-      addToCart(puzzle, correctAnswers[puzzle].points);
-      await saveToFirestore(puzzle, correctAnswers[puzzle].points);
+      if (userAnswer === correctAnswer) {
+        const user = auth.currentUser;
+        if (!user) return;
+
+        const userPuzzleDocRef = doc(db, "user_puzzle_answers", `${user.email}_${puzzle}`);
+        await setDoc(userPuzzleDocRef, {
+          puzzleNumber: puzzle,
+          userEmail: user.email,
+          answer: userAnswer,
+          timestamp: serverTimestamp(),
+        });
+
+        const newTotalPoints = totalPoints + puzzleQuestions[puzzle].points;
+        setTotalPoints(newTotalPoints);
+        setSolvedPuzzles((prev) => ({ ...prev, [puzzle]: true }));
+
+        await setDoc(doc(db, "user_total_points", user.email), {
+          email: user.email,
+          totalPoints: newTotalPoints,
+        });
+      } else {
+        alert("Incorrect answer! Try again.");
+      }
+    } catch (error) {
+      console.error("Error checking answer:", error);
     }
-
-    setResults({
-      ...results,
-      [puzzle]: isCorrect
-    });
   };
+
+  if (loading) return <p>Loading puzzles...</p>;
 
   return (
     <div className="food-display" id="food-display">
       <div className="food-display-list">
         {food_list.map((item, index) => {
           if (category === "All" || category === item.category) {
+            const isSolved = solvedPuzzles[item.name];
+
             return (
               <div key={index} className="food-item-container">
                 <FoodItem
@@ -89,40 +125,37 @@ export const FoodDisplay = ({ category }) => {
                   image={item.image}
                 />
 
-                <div className="food-questions">
-                  {puzzleQuestions[item.name]?.map((question, qIndex) => (
-                    <p key={qIndex}>{question}</p>
-                  ))}
-                </div>
+                {puzzleQuestions[item.name] && (
+                  <div className="food-questions">
+                    {puzzleQuestions[item.name].question.map((question, qIndex) => (
+                      <p key={qIndex}>{question}</p>
+                    ))}
+                  </div>
+                )}
 
-                {correctAnswers[item.name] && (
+                {!isSolved && puzzleQuestions[item.name] && (
                   <div className="answer-input">
                     <input
                       type="text"
                       value={userAnswers[item.name] || ""}
                       onChange={(e) => handleChange(e, item.name)}
                       placeholder="Enter your answer"
-                      disabled={results[item.name]}
                     />
-                    <button
-                      onClick={() => checkAnswer(item.name)}
-                      className="check-answer-btn"
-                      disabled={results[item.name] || cooldown[item.name]}
-                    >
-                      {cooldown[item.name] ? "Wait 5s..." : "Check Answer"}
+                    <button onClick={() => checkAnswer(item.name)} className="check-answer-btn">
+                      Check Answer
                     </button>
-                    {results[item.name] !== undefined && (
-                      <span className={`result ${results[item.name] ? "correct" : "incorrect"}`}>
-                        {results[item.name] ? "✅ Correct" : "❌ Incorrect"}
-                      </span>
-                    )}
                   </div>
                 )}
+
+                {isSolved && <p className="solved-text">✅ Solved</p>}
               </div>
             );
           }
           return null;
         })}
+      </div>
+      <div className="total-points">
+        <h3>Total Points Earned: {totalPoints}</h3>
       </div>
     </div>
   );
