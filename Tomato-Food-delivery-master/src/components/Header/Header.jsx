@@ -11,7 +11,7 @@ const Header = () => {
         <div className="typing-text">
           <Typewriter
             options={{
-              strings: ["Dotslash Welcomes You to", "CipherQuest 2025"],
+              strings: ["Dotslash Welcomes You to", "Cyber Chase 2025"],
               autoStart: true,
               loop: true,
               delay: 50, // Typing speed
