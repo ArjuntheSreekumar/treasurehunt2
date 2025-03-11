@@ -35,6 +35,7 @@
     width: 450px;
     align-self: center;
     flex-shrink: 0; /* Prevents image from resizing */
+    border-radius: 6px;
 }
 
 /* Headings inside header */
