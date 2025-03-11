@@ -9,11 +9,11 @@ export const FoodDisplay = ({ category }) => {
   const { food_list } = useContext(StoreContext);
 
   const puzzleQuestions = {
-    Puzzle1: { points: 3, question: ["(3points)","You are and always will be a _________"] },
-    Puzzle2: { points: 3, question: ["(3points)","https://www.hongkiat.com/blog/creative-404-error-pages/", "Ninjas are _______ ?"] },
-    Puzzle3: { points: 4, question: ["(4points)","What fallath from thy curtains"] },
-    Puzzle4: { points: 5, question: ["(5points)","Like all good lovers, they start with the head.", "_________"] },
-    Puzzle5: { points: 5, question: ["(5points)","A city must be untangled to be understood", "I will be there before and after you I am ________"] },
+    Puzzle1: { points: 3, question: ["(3points)", "You are and always will be a _________"] },
+    Puzzle2: { points: 3, question: ["(3points)", "https://www.hongkiat.com/blog/creative-404-error-pages/", "Ninjas are _______ ?"] },
+    Puzzle3: { points: 4, question: ["(4points)", "What fallath from thy curtains"] },
+    Puzzle4: { points: 5, question: ["(5points)", "Like all good lovers, they start with the head.", "_________"] },
+    Puzzle5: { points: 5, question: ["(5points)", "A city must be untangled to be understood", "I will be there before and after you I am ________"] },
   };
 
   const [puzzleAnswers, setPuzzleAnswers] = useState({});
@@ -38,17 +38,21 @@ export const FoodDisplay = ({ category }) => {
           const solvedSnapshot = await getDocs(solvedQuery);
 
           let solvedMap = {};
+          let userAnswerMap = {};
           let points = 0;
 
           solvedSnapshot.forEach((doc) => {
-            const puzzleNum = doc.data().puzzleNumber;
+            const data = doc.data();
+            const puzzleNum = data.puzzleNumber;
             solvedMap[puzzleNum] = true;
+            userAnswerMap[puzzleNum] = data.answer || "";
             if (puzzleQuestions[puzzleNum]) {
               points += puzzleQuestions[puzzleNum].points;
             }
           });
 
           setSolvedPuzzles(solvedMap);
+          setUserAnswers(userAnswerMap);
           setTotalPoints(points);
         }
 
