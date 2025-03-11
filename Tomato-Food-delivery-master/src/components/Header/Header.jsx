@@ -1,7 +1,7 @@
 import React from 'react';
 import Typewriter from 'typewriter-effect';
 import './Header.css';
-import nameImage from '../../assets/name.png'; // Adjust path as needed
+import nameImage from '../../assets/mainimage.png'; // Adjust path as needed
 
 const Header = () => {
   return (
