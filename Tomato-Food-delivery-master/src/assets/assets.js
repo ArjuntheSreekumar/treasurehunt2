@@ -62,7 +62,7 @@ export const food_list = [
     }, {
         _id: "3",
         name: "Puzzle3",
-        image: food_2,
+        image: logo,
         category: "Puzzle3"
     }, {
         _id: "4",
