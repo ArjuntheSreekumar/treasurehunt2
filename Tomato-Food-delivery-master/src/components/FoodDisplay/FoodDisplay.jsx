@@ -3,11 +3,12 @@ import { StoreContext } from "../../context/StoreContext";
 import FoodItem from "../FoodItem/FoodItem";
 import { db, auth } from "../../firebase";
 import { collection, getDoc, getDocs, query, where, doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 import "./FoodDisplay.css";
 
 export const FoodDisplay = ({ category }) => {
   const { food_list } = useContext(StoreContext);
-
+  
   const puzzleQuestions = {
     Puzzle1: { points: 3, question: ["(3points)", "You are and always will be a _________"] },
     Puzzle2: { points: 3, question: ["(3points)", "https://www.hongkiat.com/blog/creative-404-error-pages/", "Ninjas are _______ ?"] },
@@ -16,6 +17,7 @@ export const FoodDisplay = ({ category }) => {
     Puzzle5: { points: 5, question: ["(5points)", "A city must be untangled to be understood", "I will be there before and after you I am ________"] },
   };
 
+  const [user, setUser] = useState(null);
   const [puzzleAnswers, setPuzzleAnswers] = useState({});
   const [solvedPuzzles, setSolvedPuzzles] = useState({});
   const [userAnswers, setUserAnswers] = useState({});
@@ -23,48 +25,59 @@ export const FoodDisplay = ({ category }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchPuzzles = async () => {
-      try {
-        const puzzleDoc = await getDoc(doc(db, "Puzzle_ans", "Puzzle_ans"));
-        if (puzzleDoc.exists()) {
-          setPuzzleAnswers(puzzleDoc.data());
-        } else {
-          console.error("No puzzle data found!");
-        }
-
-        const user = auth.currentUser;
-        if (user) {
-          const solvedQuery = query(collection(db, "user_puzzle_answers"), where("userEmail", "==", user.email));
-          const solvedSnapshot = await getDocs(solvedQuery);
-
-          let solvedMap = {};
-          let userAnswerMap = {};
-          let points = 0;
-
-          solvedSnapshot.forEach((doc) => {
-            const data = doc.data();
-            const puzzleNum = data.puzzleNumber;
-            solvedMap[puzzleNum] = true;
-            userAnswerMap[puzzleNum] = data.answer || "";
-            if (puzzleQuestions[puzzleNum]) {
-              points += puzzleQuestions[puzzleNum].points;
-            }
-          });
-
-          setSolvedPuzzles(solvedMap);
-          setUserAnswers(userAnswerMap);
-          setTotalPoints(points);
-        }
-
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching puzzles:", error);
-        setLoading(false);
+    // Listen for auth state changes
+    const unsubscribe = onAuthStateChanged(auth, (loggedInUser) => {
+      setUser(loggedInUser);
+      if (loggedInUser) {
+        fetchPuzzles(loggedInUser.email);
       }
-    };
+    });
 
-    fetchPuzzles();
+    return () => unsubscribe(); // Cleanup on unmount
   }, []);
+
+  const fetchPuzzles = async (userEmail) => {
+    try {
+      setLoading(true);
+
+      // Fetch correct answers from database
+      const puzzleDoc = await getDoc(doc(db, "Puzzle_ans", "Puzzle_ans"));
+      if (puzzleDoc.exists()) {
+        setPuzzleAnswers(puzzleDoc.data());
+      } else {
+        console.error("No puzzle data found!");
+      }
+
+      if (userEmail) {
+        // Fetch user's solved puzzles
+        const solvedQuery = query(collection(db, "user_puzzle_answers"), where("userEmail", "==", userEmail));
+        const solvedSnapshot = await getDocs(solvedQuery);
+
+        let solvedMap = {};
+        let userAnswerMap = {};
+        let points = 0;
+
+        solvedSnapshot.forEach((doc) => {
+          const data = doc.data();
+          const puzzleNum = data.puzzleNumber;
+          solvedMap[puzzleNum] = true;
+          userAnswerMap[puzzleNum] = data.answer || "";
+          if (puzzleQuestions[puzzleNum]) {
+            points += puzzleQuestions[puzzleNum].points;
+          }
+        });
+
+        setSolvedPuzzles(solvedMap);
+        setUserAnswers(userAnswerMap);
+        setTotalPoints(points);
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching puzzles:", error);
+      setLoading(false);
+    }
+  };
 
   const handleChange = (e, puzzle) => {
     setUserAnswers({
@@ -74,7 +87,7 @@ export const FoodDisplay = ({ category }) => {
   };
 
   const checkAnswer = async (puzzle) => {
-    if (solvedPuzzles[puzzle]) return;
+    if (solvedPuzzles[puzzle] || !user) return;
 
     try {
       const correctAnswer = puzzleAnswers[puzzle]?.toLowerCase().trim();
@@ -83,9 +96,6 @@ export const FoodDisplay = ({ category }) => {
       if (!correctAnswer || !userAnswer) return;
 
       if (userAnswer === correctAnswer) {
-        const user = auth.currentUser;
-        if (!user) return;
-
         const userPuzzleDocRef = doc(db, "user_puzzle_answers", `${user.email}_${puzzle}`);
         await setDoc(userPuzzleDocRef, {
           puzzleNumber: puzzle,
